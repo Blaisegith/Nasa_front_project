@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowRight, ArrowUpRight, BookOpen, Check, ChevronRight,
+  ArrowRight, ArrowUpRight, BookOpen, Camera, Check, ChevronRight,
   CircleHelp, Compass, ExternalLink, Flame, House, Mail, Menu,
   Moon, Pencil, Paperclip, Rocket, Search, Send, Settings, Sparkles,
   Sun, UserRound, X,
@@ -55,6 +55,30 @@ function formatTime() {
   return new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(new Date());
 }
 
+function profileInitials(name) {
+  return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('');
+}
+
+async function createProfilePhoto(file) {
+  if (!file.type.startsWith('image/')) throw new Error('Choisissez un fichier image.');
+  if (file.size > 10 * 1024 * 1024) throw new Error('La photo doit faire moins de 10 Mo.');
+
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 512 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const context = canvas.getContext('2d');
+  if (!context) {
+    bitmap.close();
+    throw new Error('Impossible de traiter cette photo dans le navigateur.');
+  }
+
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvas.toDataURL('image/jpeg', 0.82);
+}
+
 function assistantReply(text) {
   const normalized = text.toLocaleLowerCase('fr');
   if (normalized.includes('flamme') || normalized.includes('forme')) {
@@ -74,7 +98,10 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const [articles, setArticles] = useState(fallbackArticles);
-  const [profile, setProfile] = useState({ name: 'Alex Martin', email: 'alex.martin@monapp.com', bio: 'Passionné par la recherche spatiale et la science.' });
+  const [profile, setProfile] = useState(() => {
+    const storedProfile = window.localStorage.getItem('nasa-profile');
+    return storedProfile ? JSON.parse(storedProfile) : null;
+  });
   const [editingProfile, setEditingProfile] = useState(false);
   const [savedArticles, setSavedArticles] = useState([]);
   const [theme, setTheme] = useState(() => window.localStorage.getItem('nasa-theme') === 'dark' ? 'dark' : 'light');
@@ -121,6 +148,17 @@ function App() {
     setSavedArticles((current) => current.includes(title) ? current.filter((item) => item !== title) : [...current, title]);
   }
 
+  function saveProfile(nextProfile) {
+    try {
+      window.localStorage.setItem('nasa-profile', JSON.stringify(nextProfile));
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'espace de stockage indisponible';
+      return `Le profil n’a pas pu être enregistré : ${reason}`;
+    }
+    setProfile(nextProfile);
+    return '';
+  }
+
   const activeCopy = sectionCopy[activePage];
 
   return (
@@ -152,15 +190,18 @@ function App() {
             <button className="icon-button theme-button" aria-label={theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'} title={theme === 'dark' ? 'Thème clair' : 'Thème sombre'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}>
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            <button className="user-chip research-chip" onClick={() => setActivePage('profile')}><UserRound size={15} /><span>NASA Research</span></button>
+            <button className="user-chip research-chip" onClick={() => setActivePage('profile')}>
+              {profile?.photo ? <img className="avatar avatar-small user-avatar-image" src={profile.photo} alt="" /> : profile ? <span className="avatar avatar-small">{profileInitials(profile.name)}</span> : <UserRound size={15} />}
+              <span>{profile?.name ?? 'Créer un compte'}</span>
+            </button>
           </div>
         </header>
 
         <div className={`page-content ${activePage === 'chat' ? 'chat-page-content' : ''}`}>
-          {activePage === 'home' && <HomePage setActivePage={setActivePage} articles={articles} draft={draft} setDraft={setDraft} sendMessage={sendMessage} />}
+          {activePage === 'home' && <HomePage setActivePage={setActivePage} articles={articles} draft={draft} setDraft={setDraft} sendMessage={sendMessage} greeting={profile ? `Bonjour, ${profile.name}` : 'Bienvenue, explorateur'} />}
           {activePage === 'chat' && <ChatPage messages={messages} draft={draft} setDraft={setDraft} sendMessage={sendMessage} />}
           {activePage === 'explore' && <LibraryPage activePage={activePage} copy={activeCopy} searchQuery={searchQuery} setSearchQuery={setSearchQuery} articleFilter={articleFilter} setArticleFilter={setArticleFilter} articles={filteredArticles} savedArticles={savedArticles} toggleSaved={toggleSaved} />}
-          {activePage === 'profile' && <ProfilePage profile={profile} setProfile={setProfile} editing={editingProfile} setEditing={setEditingProfile} />}
+          {activePage === 'profile' && <ProfilePage profile={profile} saveProfile={saveProfile} editing={editingProfile} setEditing={setEditingProfile} />}
           {activePage === 'settings' && <SettingsPage />}
         </div>
         {activePage !== 'chat' && <footer className="page-footer"><span>TechLabs</span><span>Explorer la science, préparer demain <ArrowUpRight size={13} /></span></footer>}
@@ -173,10 +214,10 @@ function PageHeading({ eyebrow, title, subtitle, actions }) {
   return <div className="page-heading"><div>{eyebrow && <div className="eyebrow"><span />{eyebrow}</div>}<h1>{title}</h1><p>{subtitle}</p></div>{actions && <div className="heading-actions">{actions}</div>}</div>;
 }
 
-function HomePage({ setActivePage, articles, draft, setDraft, sendMessage }) {
+function HomePage({ setActivePage, articles, draft, setDraft, sendMessage, greeting }) {
   return (
     <>
-      <PageHeading title={<>Bonjour, Alex <span className="wave">✳</span></>} subtitle="Découvrez comment la NASA étudie le comportement du feu en microgravité." actions={<form className="quick-question" onSubmit={(event) => { sendMessage(event); setActivePage('chat'); }}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Posez votre question sur le feu en microgravité…" aria-label="Question rapide" /><button className="quick-question-submit" type="submit" aria-label="Envoyer la question"><Send size={16} /></button></form>} />
+      <PageHeading title={<>{greeting} <span className="wave">✳</span></>} subtitle="Découvrez comment la NASA étudie le comportement du feu en microgravité." actions={<form className="quick-question" onSubmit={(event) => { sendMessage(event); setActivePage('chat'); }}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Posez votre question sur le feu en microgravité…" aria-label="Question rapide" /><button className="quick-question-submit" type="submit" aria-label="Envoyer la question"><Send size={16} /></button></form>} />
       <section className="feature-grid">
         <div className="feature-copy">
           <span className="feature-kicker"><span className="live-pulse" /> À LA UNE · SCIENCE EN ORBITE</span>
@@ -301,17 +342,63 @@ function ArticleRow({ article, index, saved, onSave }) {
   return <article className="article-row"><div className={`article-thumb thumb-${index % 3}`} style={article.image ? { backgroundImage: `url("${article.image}")` } : undefined}>{!article.image && <span className="thumb-flame"><i /></span>}<span className="thumb-index">0{index + 1}</span></div><div className="article-info"><div className="article-category"><span />{article.category.toUpperCase()} <span className="category-separator">/</span> NASA</div><h3>{article.title}</h3><p>{article.description}</p><div className="article-meta"><span>NASA</span><i /><span>{article.date}</span></div></div><div className="article-actions"><button className={`save-button ${saved ? 'saved' : ''}`} aria-label={saved ? 'Retirer des favoris' : 'Enregistrer'} onClick={onSave}>{saved ? <Check size={15} /> : <BookOpen size={15} />}</button><button className="read-button" onClick={() => window.open('https://www.nasa.gov/', '_blank', 'noopener,noreferrer')}>Lire l’article <ArrowUpRight size={13} /></button></div><ChevronRight className="article-chevron" size={16} /></article>;
 }
 
-function ProfilePage({ profile, setProfile, editing, setEditing }) {
-  const [draftProfile, setDraftProfile] = useState(profile);
-  function saveProfile(event) {
+function ProfilePage({ profile, saveProfile, editing, setEditing }) {
+  const [draftProfile, setDraftProfile] = useState(() => profile ?? { name: '', email: '', bio: 'Passionné par la recherche spatiale et la science.', photo: '' });
+  const [error, setError] = useState('');
+
+  async function selectPhoto(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setError('');
+    try {
+      const photo = await createProfilePhoto(file);
+      setDraftProfile((current) => ({ ...current, photo }));
+    } catch (photoError) {
+      setError(photoError instanceof Error ? photoError.message : 'Impossible de charger cette photo.');
+    } finally {
+      event.target.value = '';
+    }
+  }
+
+  function submitProfile(event) {
     event.preventDefault();
-    setProfile(draftProfile);
+    const nextProfile = { ...draftProfile, name: draftProfile.name.trim(), email: draftProfile.email.trim() };
+    const saveError = saveProfile(nextProfile);
+    if (saveError) {
+      setError(saveError);
+      return;
+    }
+    setError('');
     setEditing(false);
   }
+
+  if (!profile) {
+    return <>
+      <PageHeading eyebrow="ESPACE PERSONNEL" title="Créez votre compte." subtitle="Inscrivez-vous avec votre adresse e-mail pour personnaliser votre espace." />
+      <section className="account-gate">
+        <form className="account-form" onSubmit={submitProfile}>
+          <span className="account-icon"><UserRound size={22} /></span>
+          <h2>Votre espace, à vous.</h2>
+          <p>Votre profil et votre photo seront enregistrés sur cet appareil.</p>
+          <label>Nom complet<input autoComplete="name" required value={draftProfile.name} onChange={(event) => setDraftProfile({ ...draftProfile, name: event.target.value })} placeholder="Ex. Alex Martin" /></label>
+          <label>Adresse e-mail<input autoComplete="email" type="email" required value={draftProfile.email} onChange={(event) => setDraftProfile({ ...draftProfile, email: event.target.value })} placeholder="vous@exemple.com" /></label>
+          <div className="photo-field">
+            <span className="photo-preview">{draftProfile.photo ? <img src={draftProfile.photo} alt="Aperçu de la photo de profil" /> : <Camera size={19} />}</span>
+            <label className="photo-picker">Ajouter une photo <input type="file" accept="image/*" onChange={selectPhoto} /></label>
+            <span className="photo-help">Facultatif · image jusqu’à 10 Mo</span>
+          </div>
+          {error && <p className="form-error" role="alert">{error}</p>}
+          <button className="button-primary account-submit" type="submit">Créer mon compte <ArrowRight size={15} /></button>
+          <p className="account-local-note">Compte local : aucun mot de passe ni service en ligne n’est utilisé.</p>
+        </form>
+      </section>
+    </>;
+  }
+
   return <>
     <PageHeading eyebrow="ESPACE PERSONNEL" title="Votre profil." subtitle="Retrouvez vos informations et vos ressources enregistrées." />
-    <section className="profile-layout"><div className="profile-card"><button className="profile-edit-button" aria-label="Modifier le profil" onClick={() => { setDraftProfile(profile); setEditing(true); }}><Pencil size={15} /></button><div className="profile-orbit"><span className="avatar avatar-large">AM</span><i className="orbit-dot" /></div><h2>{profile.name}</h2><div className="profile-email"><Mail size={15} />{profile.email}</div><p className="profile-bio">{profile.bio}</p><div className="profile-tags"><span><Rocket size={13} /> EXPLORATION SPATIALE</span><span><Flame size={13} /> COMBUSTION</span></div><div className="profile-stats"><div><strong>04</strong><span>SUJETS SUIVIS</span></div><div><strong>12</strong><span>ARTICLES LUS</span></div><div><strong>03</strong><span>ENREGISTRÉS</span></div></div></div><aside className="profile-side"><div className="side-note"><span className="side-note-icon"><Sparkles size={17} /></span><div><span>VOTRE ESPACE</span><h3>Curiosité sans frontières.</h3><p>Vos centres d’intérêt façonnent les découvertes qui vous sont proposées.</p></div></div><div className="interest-list"><div className="interest-heading"><h3>Vos centres d’intérêt</h3><button onClick={() => setEditing(true)}><Pencil size={13} /> Modifier</button></div>{topics.map((topic, index) => <div className="interest-row" key={topic.label}><span className={`interest-number ${topic.color}`}>0{index + 1}</span><span>{topic.label}</span><ArrowUpRight size={14} /></div>)}</div></aside></section>
-    {editing && <div className="modal-scrim" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditing(false); }}><form className="edit-modal" onSubmit={saveProfile}><div className="modal-heading"><div><span className="eyebrow">ESPACE PERSONNEL</span><h2>Modifier le profil</h2></div><button className="icon-button" type="button" aria-label="Fermer" onClick={() => setEditing(false)}><X size={18} /></button></div><label>Nom complet<input value={draftProfile.name} onChange={(event) => setDraftProfile({ ...draftProfile, name: event.target.value })} /></label><label>Adresse e-mail<input type="email" value={draftProfile.email} onChange={(event) => setDraftProfile({ ...draftProfile, email: event.target.value })} /></label><label>À propos<textarea rows="3" value={draftProfile.bio} onChange={(event) => setDraftProfile({ ...draftProfile, bio: event.target.value })} /></label><div className="modal-actions"><button className="button-secondary" type="button" onClick={() => setEditing(false)}>Annuler</button><button className="button-primary" type="submit">Enregistrer <Check size={15} /></button></div></form></div>}
+    <section className="profile-layout"><div className="profile-card"><button className="profile-edit-button" aria-label="Modifier le profil" onClick={() => { setDraftProfile(profile); setError(''); setEditing(true); }}><Pencil size={15} /></button><div className="profile-orbit">{profile.photo ? <img className="avatar avatar-large profile-photo" src={profile.photo} alt={`Photo de ${profile.name}`} /> : <span className="avatar avatar-large">{profileInitials(profile.name)}</span>}<i className="orbit-dot" /></div><h2>{profile.name}</h2><div className="profile-email"><Mail size={15} />{profile.email}</div><p className="profile-bio">{profile.bio}</p><div className="profile-tags"><span><Rocket size={13} /> EXPLORATION SPATIALE</span><span><Flame size={13} /> COMBUSTION</span></div><div className="profile-stats"><div><strong>04</strong><span>SUJETS SUIVIS</span></div><div><strong>12</strong><span>ARTICLES LUS</span></div><div><strong>03</strong><span>ENREGISTRÉS</span></div></div></div><aside className="profile-side"><div className="side-note"><span className="side-note-icon"><Sparkles size={17} /></span><div><span>VOTRE ESPACE</span><h3>Curiosité sans frontières.</h3><p>Vos centres d’intérêt façonnent les découvertes qui vous sont proposées.</p></div></div><div className="interest-list"><div className="interest-heading"><h3>Vos centres d’intérêt</h3><button onClick={() => { setDraftProfile(profile); setError(''); setEditing(true); }}><Pencil size={13} /> Modifier</button></div>{topics.map((topic, index) => <div className="interest-row" key={topic.label}><span className={`interest-number ${topic.color}`}>0{index + 1}</span><span>{topic.label}</span><ArrowUpRight size={14} /></div>)}</div></aside></section>
+    {editing && <div className="modal-scrim" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditing(false); }}><form className="edit-modal" onSubmit={submitProfile}><div className="modal-heading"><div><span className="eyebrow">ESPACE PERSONNEL</span><h2>Modifier le profil</h2></div><button className="icon-button" type="button" aria-label="Fermer" onClick={() => setEditing(false)}><X size={18} /></button></div><label>Nom complet<input autoComplete="name" required value={draftProfile.name} onChange={(event) => setDraftProfile({ ...draftProfile, name: event.target.value })} /></label><label>Adresse e-mail<input autoComplete="email" type="email" required value={draftProfile.email} onChange={(event) => setDraftProfile({ ...draftProfile, email: event.target.value })} /></label><label>À propos<textarea rows="3" value={draftProfile.bio} onChange={(event) => setDraftProfile({ ...draftProfile, bio: event.target.value })} /></label><div className="photo-field edit-photo-field"><span className="photo-preview">{draftProfile.photo ? <img src={draftProfile.photo} alt="Aperçu de la photo de profil" /> : <Camera size={19} />}</span><label className="photo-picker">Changer la photo<input type="file" accept="image/*" onChange={selectPhoto} /></label>{draftProfile.photo && <button className="photo-remove" type="button" onClick={() => setDraftProfile({ ...draftProfile, photo: '' })}>Supprimer</button>}</div>{error && <p className="form-error" role="alert">{error}</p>}<div className="modal-actions"><button className="button-secondary" type="button" onClick={() => setEditing(false)}>Annuler</button><button className="button-primary" type="submit">Enregistrer <Check size={15} /></button></div></form></div>}
   </>;
 }
 
