@@ -198,7 +198,7 @@
 @media(max-width:600px){.sidebar .nav-link{font-size:14px}.topbar-brand .brand-copy strong{font-size:12px}.page-heading>div>p{font-size:13px}.feature-copy>p{font-size:13px}.metric p{font-size:10px}.chat-welcome p{font-size:13px}.chat-suggestions button{font-size:11px}.chat-stream .message-bubble{font-size:14px}.chat-disclaimer{font-size:9px}}
 .main-area{padding-top:62px}
 .topbar{position:fixed;top:0;left:0;right:0;z-index:50;margin:0;padding-left:20px;padding-right:20px}
-.quick-question{position:relative;z-index:1;display:flex;align-items:center;gap:14px;width:min(780px,100%);height:76px;margin:-5px auto 29px;padding:10px 12px 10px 20px;border:1px solid #d9e6f4;border-radius:5px;background:#fff;box-shadow:0 12px 32px #1b41651a,0 2px 7px #1b41650b;transition:box-shadow .2s,border-color .2s,transform .2s}
+.quick-question{position:sticky;z-index:15;top:calc(100dvh - 92px);display:flex;align-items:center;gap:14px;width:min(780px,100%);height:76px;margin:-5px auto 29px;padding:10px 12px 10px 20px;border:1px solid #d9e6f4;border-radius:5px;background:#fff;box-shadow:0 12px 32px #1b41651a,0 2px 7px #1b41650b;transition:box-shadow .2s,border-color .2s,transform .2s}
 .quick-question:hover{transform:translateY(-2px);box-shadow:0 16px 38px #1b416522,0 3px 9px #1b41650c}
 .quick-question:focus-within{border-color:#82aae0;box-shadow:0 0 0 3px #1267eb15,0 14px 34px #1b41651c}
 .quick-question-icon{flex:0 0 auto;color:#4c83c5}
