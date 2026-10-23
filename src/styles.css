@@ -212,7 +212,6 @@
 .photo-picker{position:relative;overflow:hidden;display:inline-flex;align-items:center;min-height:34px;padding:0 10px;border:1px solid #dce7f4;background:#fff;color:#315476;font-size:11px;cursor:pointer}
 .photo-picker:hover{background:#f3f8ff}
 .photo-picker input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
-.photo-help{color:#8a9db2;font-size:10px}
 .photo-remove{padding:6px;border:0;background:transparent;color:#b35d51;font-size:10px;cursor:pointer}
 .account-submit{width:100%;justify-content:center;margin-top:22px}
 .form-error{margin:12px 0 0!important;color:#bd463b!important;font-size:11px!important}
@@ -221,9 +220,9 @@
 .edit-photo-field{padding-top:4px}
 .app-shell[data-theme="dark"] .account-form{background:#142237;border-color:#293c54}
 .app-shell[data-theme="dark"] .account-form h2{color:#dce8f5}
-.app-shell[data-theme="dark"] .account-form>p,.app-shell[data-theme="dark"] .photo-help{color:#9aadc3}
+.app-shell[data-theme="dark"] .account-form>p{color:#9aadc3}
 .app-shell[data-theme="dark"] .account-form>label{color:#a9bdd4}
 .app-shell[data-theme="dark"] .account-form>label input,.app-shell[data-theme="dark"] .edit-modal>label input{background:#0e1c2e;border-color:#30445d;color:#dce8f5}
 .app-shell[data-theme="dark"] .photo-preview{background:#0e1c2e;border-color:#405775;color:#9aadc3}
 .app-shell[data-theme="dark"] .photo-picker{background:#17283e;border-color:#30445d;color:#c3d4e8}
-@media(max-width:600px){.account-form{padding:23px 19px}.photo-field{flex-wrap:wrap}.photo-help{width:100%;padding-left:60px}}
+@media(max-width:600px){.account-form{padding:23px 19px}.photo-field{flex-wrap:wrap}}
