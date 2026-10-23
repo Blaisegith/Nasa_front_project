@@ -379,17 +379,15 @@ function ProfilePage({ profile, saveProfile, editing, setEditing }) {
         <form className="account-form" onSubmit={submitProfile}>
           <span className="account-icon"><UserRound size={22} /></span>
           <h2>Votre espace, à vous.</h2>
-          <p>Votre profil et votre photo seront enregistrés sur cet appareil.</p>
           <label>Nom complet<input autoComplete="name" required value={draftProfile.name} onChange={(event) => setDraftProfile({ ...draftProfile, name: event.target.value })} placeholder="Ex. Alex Martin" /></label>
           <label>Adresse e-mail<input autoComplete="email" type="email" required value={draftProfile.email} onChange={(event) => setDraftProfile({ ...draftProfile, email: event.target.value })} placeholder="vous@exemple.com" /></label>
           <div className="photo-field">
             <span className="photo-preview">{draftProfile.photo ? <img src={draftProfile.photo} alt="Aperçu de la photo de profil" /> : <Camera size={19} />}</span>
-            <label className="photo-picker">Ajouter une photo <input type="file" accept="image/*" onChange={selectPhoto} /></label>
+            <label className="photo-picker">Choisir une photo <input type="file" accept="image/*" aria-label="Choisir une photo depuis les fichiers" onChange={selectPhoto} /></label>
             <span className="photo-help">Facultatif · image jusqu’à 10 Mo</span>
           </div>
           {error && <p className="form-error" role="alert">{error}</p>}
           <button className="button-primary account-submit" type="submit">Créer mon compte <ArrowRight size={15} /></button>
-          <p className="account-local-note">Compte local : aucun mot de passe ni service en ligne n’est utilisé.</p>
         </form>
       </section>
     </>;
