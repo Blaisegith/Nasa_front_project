@@ -218,14 +218,6 @@ function HomePage({ setActivePage, articles, draft, setDraft, sendMessage, greet
   return (
     <div className="home-page">
       <PageHeading title={<>{greeting} <span className="wave">✳</span></>} subtitle="Découvrez comment la NASA étudie le comportement du feu en microgravité." />
-      <form className="quick-question" onSubmit={(event) => { sendMessage(event); setActivePage('chat'); }}>
-        <Sparkles className="quick-question-icon" size={21} />
-        <div className="quick-question-field">
-          <span>POSEZ VOTRE QUESTION</span>
-          <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Que voulez-vous découvrir sur le feu dans l’espace ?" aria-label="Question rapide" />
-        </div>
-        <button className="quick-question-submit" type="submit" aria-label="Envoyer la question"><Send size={19} /></button>
-      </form>
       <section className="feature-grid">
         <div className="feature-copy">
           <span className="feature-kicker"><span className="live-pulse" /> À LA UNE · SCIENCE EN ORBITE</span>
@@ -242,7 +234,14 @@ function HomePage({ setActivePage, articles, draft, setDraft, sendMessage, greet
       </section>
 
       <ResearchInsights />
-      <div className="home-scroll-tail" aria-hidden="true" />
+      <form className="quick-question" onSubmit={(event) => { sendMessage(event); setActivePage('chat'); }}>
+        <Sparkles className="quick-question-icon" size={21} />
+        <div className="quick-question-field">
+          <span>POSEZ VOTRE QUESTION</span>
+          <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Que voulez-vous découvrir sur le feu dans l’espace ?" aria-label="Question rapide" />
+        </div>
+        <button className="quick-question-submit" type="submit" aria-label="Envoyer la question"><Send size={19} /></button>
+      </form>
     </div>
   );
 }
