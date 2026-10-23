@@ -216,7 +216,7 @@ function PageHeading({ eyebrow, title, subtitle, actions }) {
 
 function HomePage({ setActivePage, articles, draft, setDraft, sendMessage, greeting }) {
   return (
-    <>
+    <div className="home-page">
       <PageHeading title={<>{greeting} <span className="wave">✳</span></>} subtitle="Découvrez comment la NASA étudie le comportement du feu en microgravité." />
       <form className="quick-question" onSubmit={(event) => { sendMessage(event); setActivePage('chat'); }}>
         <Sparkles className="quick-question-icon" size={21} />
@@ -242,7 +242,8 @@ function HomePage({ setActivePage, articles, draft, setDraft, sendMessage, greet
       </section>
 
       <ResearchInsights />
-    </>
+      <div className="home-scroll-tail" aria-hidden="true" />
+    </div>
   );
 }
 
