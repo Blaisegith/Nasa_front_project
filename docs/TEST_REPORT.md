@@ -9,7 +9,7 @@ Date : 14 novembre 2026 · Branche `feature/techlabs-platform-integration`
 | Suite | Commande | Résultat |
 |---|---|---|
 | Build frontend | `npm run build` | **OK** — 1585 modules, 1,39 s |
-| Backend | `python -m pytest` | **14 passés**, 0 échec |
+| Backend | `python -m pytest` | **17 passés**, 0 échec |
 | Vérification HTTP | session, profil, chat, conversations | **OK** |
 | Proxy Vite `/api` | `GET /api/v1/system/health` | **200** |
 
@@ -50,6 +50,9 @@ pas modifiées.
 | 12 | `test_conversation_shared_between_views` | liste et détail renvoient la même conversation | ✅ |
 | 13 | `test_conversations_of_other_user_are_not_listed` | `items: []`, `total: 0` | ✅ |
 | 14 | `test_media_and_science_are_open_but_not_connected` | 501 sur média et science | ✅ |
+| 15 | `test_avatar_upload_and_fetch` | 201, URL d'avatar, restitution octet pour octet | ✅ |
+| 16 | `test_avatar_of_another_user_is_not_readable` | Bob → 404 sur l'avatar d'Alice | ✅ |
+| 17 | `test_avatar_rejects_unsupported_type` | 422 sur `text/plain` | ✅ |
 
 ---
 
@@ -72,7 +75,7 @@ pas modifiées.
 
 | Élément | Raison |
 |---|---|
-| Upload d'avatar (multipart) | dépend d'un client multipart ; à ajouter avec `httpx` + `files=` |
+| Upload d'avatar (multipart) | couvert par `test_avatar.py` ; volume et formats réels à compléter |
 | PostgreSQL / Supabase réel | aucune instance disponible ; les tests tournent sur SQLite |
 | Politiques RLS en base | nécessite PostgreSQL ; à valider avec `SET LOCAL app.user_id` |
 | Rendu des réponses multimodales | aucun générateur branché (par conception) |

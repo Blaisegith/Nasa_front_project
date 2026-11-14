@@ -61,13 +61,19 @@ async def upload_avatar(
 
 
 @router.get(
-    "/avatar/{filename}",
+    "/avatar/{owner_id}/{filename}",
     summary="Récupérer sa propre photo de profil",
     response_class=FileResponse,
 )
-async def read_avatar(principal: PrincipalDep, filename: str) -> FileResponse:
+async def read_avatar(
+    principal: PrincipalDep,
+    owner_id: str,
+    filename: str,
+) -> FileResponse:
     """L'URL contient l'`user_id`, mais l'accès est revérifié côté serveur."""
-    url = f"/api/v1/profile/avatar/{principal.user_id}/{filename}"
+    if owner_id != principal.user_id:
+        raise NotFound("Avatar introuvable.")
+    url = f"/api/v1/profile/avatar/{owner_id}/{filename}"
     path = profile_service.avatar_path_from_url(url, user_id=principal.user_id)
     if path is None or not os.path.isfile(path):
         raise NotFound("Avatar introuvable.")
