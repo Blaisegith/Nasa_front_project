@@ -4,6 +4,8 @@
 > Date de l'audit : 14 nov. 2026.
 > Méthode : lecture intégrale du code, exécution réelle (`npm install`, `npm run build`), analyse statique du CSS et de l'historique Git.
 > Aucune modification du code applicatif n'a été effectuée pendant l'audit.
+>
+> **Note** : ce rapport décrit l'état du projet **avant** intégration (phase 0). L'état après intégration est décrit dans `ARCHITECTURE.md`, `API_DOCUMENTATION.md` et `TEST_REPORT.md`.
 
 ---
 

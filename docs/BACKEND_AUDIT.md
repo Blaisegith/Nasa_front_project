@@ -2,6 +2,8 @@
 
 > Périmètre : dépôt officiel `Blaisegith/Nasa_front_project`, branche `main` (commit `bd70c47`).
 > Date de l'audit : 14 nov. 2026.
+>
+> **Note** : ce rapport décrit l'état du projet **avant** intégration (phase 0). L'état après intégration est décrit dans `ARCHITECTURE.md`, `API_DOCUMENTATION.md` et `TEST_REPORT.md`.
 
 ---
 
