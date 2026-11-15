@@ -1,0 +1,300 @@
+/*
+ * Tableau de bord d'analyse (Accueil).
+ *
+ * Structure de lecture : question et état → réponse → visuels → données →
+ * sources. Les cartes sont des surfaces autonomes, distinctes du fond, avec
+ * des accents discrets : l'ensemble doit rester lisible dans les deux thèmes
+ * (voir `tokens.css`).
+ */
+
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 1.6vw, 18px);
+  min-width: 0;
+}
+
+.dashboard {
+  gap: clamp(12px, 1.6vw, 18px);
+}
+
+/* ------------------------------------------------------------------------- *
+ * En-tête d'analyse
+ * ------------------------------------------------------------------------- */
+.analysis-header {
+  display: grid;
+  gap: 10px;
+  padding-bottom: clamp(10px, 1.4vw, 16px);
+  border-bottom: 1px solid var(--line);
+}
+
+.analysis-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.analysis-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+.analysis-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.analysis-header.phase-done .analysis-pulse {
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 22%, transparent);
+}
+
+.analysis-header.phase-unavailable .analysis-pulse,
+.analysis-header.phase-error .analysis-pulse {
+  background: var(--warning);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning) 22%, transparent);
+}
+
+.analysis-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.analysis-status.phase-done {
+  border-color: color-mix(in srgb, var(--success) 34%, transparent);
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.analysis-status.phase-unavailable,
+.analysis-status.phase-error {
+  border-color: color-mix(in srgb, var(--warning) 34%, transparent);
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.analysis-question {
+  margin: 0;
+  font-size: clamp(16px, 2.1vw, 21px);
+  line-height: 1.35;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.analysis-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.analysis-metric {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+
+.analysis-metric svg {
+  align-self: center;
+  color: var(--accent);
+}
+
+.analysis-metric dd {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-metric dt {
+  font-size: 10px;
+  color: var(--ink-3);
+}
+
+.analysis-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.analysis-ref {
+  font-size: 9.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-left: auto;
+}
+
+/* ------------------------------------------------------------------------- *
+ * Barre de question compacte (questions complémentaires)
+ * ------------------------------------------------------------------------- */
+.dashboard-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 25;
+  margin-top: auto;
+  padding: 14px 0 calc(10px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, transparent, var(--dock-fade) 46%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.dashboard-dock-inner {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  max-width: 880px;
+  margin-inline: auto;
+}
+
+.dashboard-dock-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink-3);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+
+.dashboard-dock-label svg {
+  color: var(--accent);
+}
+
+.dashboard-dock .composer {
+  max-width: 880px;
+}
+
+.dashboard-dock .composer-shell {
+  border-radius: 22px;
+  padding: 6px 6px 6px 8px;
+}
+
+/* ------------------------------------------------------------------------- *
+ * Mise en page du contenu de réponse
+ * ------------------------------------------------------------------------- */
+.dashboard .answer {
+  display: grid;
+  gap: clamp(12px, 1.6vw, 18px);
+}
+
+.dashboard .answer-section {
+  padding: clamp(12px, 1.5vw, 16px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+
+.dashboard .answer-section-simple {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.dashboard .answer-summary {
+  font-size: 14.5px;
+  line-height: 1.62;
+  color: var(--ink);
+  border-left: 2px solid var(--accent);
+  padding-left: 12px;
+}
+
+.dashboard .answer-chart {
+  padding: clamp(12px, 1.5vw, 16px);
+  border-radius: 14px;
+}
+
+.dashboard .answer-media-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 12px;
+}
+
+.dashboard .answer-media {
+  border-radius: 14px;
+}
+
+.dashboard .answer-table {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: clamp(10px, 1.4vw, 14px);
+  background: var(--surface-2);
+  overflow-x: auto;
+}
+
+.dashboard .answer-table-row {
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+.dashboard .answer-references {
+  padding: clamp(12px, 1.5vw, 16px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+@media (max-width: 900px) {
+  .analysis-header {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .analysis-question {
+    font-size: 16px;
+  }
+
+  .analysis-metric {
+    padding: 4px 8px;
+  }
+
+  .dashboard-dock-label {
+    display: none;
+  }
+
+  .dashboard-dock {
+    padding-top: 8px;
+  }
+
+  .analysis-ref {
+    margin-left: 0;
+  }
+}

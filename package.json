@@ -1,19 +1,29 @@
 {
   "name": "nasa-microgravity-fire-research",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "check:styles": "node scripts/check-styles.mjs",
+    "check:encoding": "node scripts/check-encoding.mjs",
+    "check:contrast": "node scripts/check-contrast.mjs",
+    "check:colors": "node scripts/audit-colors.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "check": "npm run check:i18n && npm run check:styles && npm run check:encoding && npm run check:contrast && npm run check:secrets",
+    "test:avatar": "node scripts/test-avatar.mjs",
+    "test:flow": "node scripts/test-dashboard-flow.mjs",
+    "test:multimodal": "node scripts/test-multimodal-flow.mjs",
+    "test": "npm run test:avatar && npm run test:flow"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "lucide-react": "^0.468.0"
-  },
-  "devDependencies": {}
+    "@vitejs/plugin-react": "6.1.2",
+    "lucide-react": "0.468.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "vite": "8.3.5"
+  }
 }

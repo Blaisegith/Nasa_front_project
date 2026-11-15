@@ -1,0 +1,23 @@
+fastapi==0.121.2
+uvicorn[standard]==0.41.0
+sqlalchemy==2.0.44
+aiosqlite==0.21.0
+pydantic-settings==2.12.0
+email-validator==2.3.0
+python-multipart==0.0.20
+httpx==0.28.1
+pillow==13.0.0
+pytest==9.0.1
+pytest-asyncio==1.3.0
+
+# --- Recherche multimodale (optionnelle, non installée par défaut) -----------
+# Embeddings sémantiques texte/image : espace commun CLIP/SigLIP.
+# À installer seulement si un modèle .onnx et son tokenizer.json sont déposés
+# dans MULTIMODAL_MODEL_DIR (voir docs/MULTIMODAL_RETRIEVAL.md).
+# onnxruntime==1.32.0
+# tokenizers==0.22.1
+
+# --- Supabase / PostgreSQL (production) --------------------------------------
+# Nécessaire dès que DATABASE_URL commence par `postgresql+asyncpg`.
+# Absent du développement local : SQLite n'en a pas besoin.
+asyncpg==0.32.0
