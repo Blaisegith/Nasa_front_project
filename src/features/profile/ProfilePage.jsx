@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ArrowRight, ArrowUpRight, Check, Flame, Loader2, LogOut, Mail, Pencil,
   Rocket, UserRound, X,
 } from 'lucide-react';
 import PageHeading from '../../components/PageHeading.jsx';
+import UserAvatar from '../../components/UserAvatar.jsx';
 import { topics } from '../../data/constants.js';
-import { profileInitials } from '../../lib/format.js';
 import { resolveUrl } from '../../lib/apiClient.js';
 import { fileToResizedBlob } from '../../lib/photo.js';
 import { useAuth } from '../../state/AuthProvider.jsx';
+import { useI18n } from '../../i18n/I18nProvider.jsx';
 
 function AccountGate() {
   const { signIn } = useAuth();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -24,7 +26,7 @@ function AccountGate() {
     try {
       await signIn(email, name);
     } catch (caught) {
-      setError(caught.message ?? 'Connexion impossible.');
+      setError(caught.message ?? t('profile.sessionExpired'));
     } finally {
       setIsSubmitting(false);
     }
@@ -33,42 +35,40 @@ function AccountGate() {
   return (
     <>
       <PageHeading
-        eyebrow="ESPACE PERSONNEL"
-        title="Créez votre compte."
-        subtitle="Inscrivez-vous avec votre adresse e-mail pour personnaliser votre espace."
+        eyebrow={t('profile.eyebrow')}
+        title={t('profile.createTitle')}
+        subtitle={t('profile.createSubtitle')}
       />
       <section className="account-gate">
         <form className="account-form" onSubmit={submit}>
           <span className="account-icon"><UserRound size={22} /></span>
-          <h2>Votre espace, à vous.</h2>
-          <p className="account-hint">
-            Accès simplifié : votre e-mail suffit. Aucune donnée personnelle n’est utilisée pour vous authentifier.
-          </p>
+          <h2>{t('profile.createCardTitle')}</h2>
+          <p className="account-hint">{t('profile.createHint')}</p>
           <label>
-            Nom complet
+            {t('profile.fullName')}
             <input
               autoComplete="name"
               required
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Ex. Alex Martin"
+              placeholder={t('profile.fullNamePlaceholder')}
             />
           </label>
           <label>
-            Adresse e-mail
+            {t('profile.email')}
             <input
               autoComplete="email"
               type="email"
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="vous@exemple.com"
+              placeholder={t('profile.emailPlaceholder')}
             />
           </label>
           {error && <p className="form-error" role="alert">{error}</p>}
           <button className="button-primary account-submit" type="submit" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 size={15} className="spin" /> : null}
-            Créer mon compte <ArrowRight size={15} />
+            {t('profile.submitCreate')} <ArrowRight size={15} />
           </button>
         </form>
       </section>
@@ -78,6 +78,7 @@ function AccountGate() {
 
 function EditProfileModal({ profile, onClose }) {
   const { updateProfile, setAvatar } = useAuth();
+  const { t } = useI18n();
   const [name, setName] = useState(profile.display_name ?? '');
   const [bio, setBio] = useState(profile.bio ?? '');
   const [error, setError] = useState('');
@@ -94,7 +95,7 @@ function EditProfileModal({ profile, onClose }) {
       const url = await setAvatar(resized);
       setPhoto(url ?? '');
     } catch (caught) {
-      setError(caught.message ?? 'Impossible de charger cette photo.');
+      setError(caught.message ?? t('profile.photoAria'));
     }
   };
 
@@ -106,7 +107,7 @@ function EditProfileModal({ profile, onClose }) {
       await updateProfile({ display_name: name.trim(), bio });
       onClose();
     } catch (caught) {
-      setError(caught.message ?? 'Enregistrement impossible.');
+      setError(caught.message ?? t('profile.sessionExpired'));
     } finally {
       setIsSaving(false);
     }
@@ -125,43 +126,45 @@ function EditProfileModal({ profile, onClose }) {
       >
         <div className="modal-heading">
           <div>
-            <span className="eyebrow">ESPACE PERSONNEL</span>
-            <h2>Modifier le profil</h2>
+            <span className="eyebrow">{t('profile.eyebrow')}</span>
+            <h2>{t('profile.editProfile')}</h2>
           </div>
-          <button className="icon-button" type="button" aria-label="Fermer" onClick={onClose}>
+          <button className="icon-button" type="button" aria-label={t('common.close')} onClick={onClose}>
             <X size={18} />
           </button>
         </div>
 
         <label>
-          Nom complet
+          {t('profile.fullName')}
           <input autoComplete="name" required value={name} onChange={(event) => setName(event.target.value)} />
         </label>
         <label>
-          Adresse e-mail
+          {t('profile.email')}
           <input value={profile.email ?? ''} readOnly aria-readonly="true" />
         </label>
         <label>
-          À propos
+          {t('profile.bio')}
           <textarea rows="3" value={bio} onChange={(event) => setBio(event.target.value)} />
         </label>
 
         <div className="photo-field edit-photo-field">
           <span className="photo-preview">
-            {photo ? <img src={resolveUrl(photo)} alt="Aperçu de la photo de profil" /> : <UserRound size={21} />}
+            {photo
+              ? <img src={resolveUrl(photo)} alt="" />
+              : <UserRound size={21} />}
           </span>
           <label className="photo-picker">
-            Changer la photo
-            <input type="file" accept="image/*" aria-label="Changer la photo" onChange={selectPhoto} />
+            {t('profile.changePhoto')}
+            <input type="file" accept="image/*" aria-label={t('profile.changePhoto')} onChange={selectPhoto} />
           </label>
         </div>
 
         {error && <p className="form-error" role="alert">{error}</p>}
 
         <div className="modal-actions">
-          <button className="button-secondary" type="button" onClick={onClose}>Annuler</button>
+          <button className="button-secondary" type="button" onClick={onClose}>{t('common.cancel')}</button>
           <button className="button-primary" type="submit" disabled={isSaving}>
-            {isSaving && <Loader2 size={15} className="spin" />} Enregistrer <Check size={15} />
+            {isSaving && <Loader2 size={15} className="spin" />} {t('common.save')} <Check size={15} />
           </button>
         </div>
       </form>
@@ -171,8 +174,8 @@ function EditProfileModal({ profile, onClose }) {
 
 function ProfileCard({ profile }) {
   const { signOut } = useAuth();
+  const { t } = useI18n();
   const [editing, setEditing] = useState(false);
-  const avatar = resolveUrl(profile.avatar_url);
 
   return (
     <>
@@ -180,31 +183,29 @@ function ProfileCard({ profile }) {
         <div className="profile-card">
           <button
             className="profile-edit-button"
-            aria-label="Modifier le profil"
+            aria-label={t('profile.editProfile')}
             onClick={() => setEditing(true)}
           >
             <Pencil size={15} />
           </button>
           <div className="profile-orbit">
-            {avatar
-              ? <img className="avatar avatar-large profile-photo" src={avatar} alt={`Photo de ${profile.display_name}`} />
-              : <span className="avatar avatar-large">{profileInitials(profile.display_name)}</span>}
+            <UserAvatar profile={profile} size="lg" />
             <i className="orbit-dot" />
           </div>
           <h2>{profile.display_name}</h2>
           <div className="profile-email"><Mail size={15} />{profile.email}</div>
-          <p className="profile-bio">{profile.bio || 'Aucune description pour le moment.'}</p>
+          <p className="profile-bio">{profile.bio || t('profile.bioEmpty')}</p>
           <div className="profile-tags">
-            <span><Rocket size={13} /> EXPLORATION SPATIALE</span>
-            <span><Flame size={13} /> COMBUSTION</span>
+            <span><Rocket size={13} /> {t('profile.space')}</span>
+            <span><Flame size={13} /> {t('topics.combustion')}</span>
           </div>
           <div className="profile-stats">
-            <div><strong>04</strong><span>SUJETS SUIVIS</span></div>
-            <div><strong>12</strong><span>ARTICLES LUS</span></div>
-            <div><strong>03</strong><span>ENREGISTRÉS</span></div>
+            <div><strong>{String(topics.length).padStart(2, '0')}</strong><span>{t('profile.statsTopics')}</span></div>
+            <div><strong>12</strong><span>{t('profile.statsRead')}</span></div>
+            <div><strong>03</strong><span>{t('profile.statsSaved')}</span></div>
           </div>
           <button className="button-secondary profile-signout" onClick={signOut}>
-            <LogOut size={14} /> Se déconnecter
+            <LogOut size={14} /> {t('common.signOut')}
           </button>
         </div>
 
@@ -212,20 +213,22 @@ function ProfileCard({ profile }) {
           <div className="side-note">
             <span className="side-note-icon"><UserRound size={17} /></span>
             <div>
-              <span>VOTRE ESPACE</span>
-              <h3>Curiosité sans frontières.</h3>
-              <p>Vos centres d’intérêt façonnent les découvertes qui vous sont proposées.</p>
+              <span>{t('profile.space')}</span>
+              <h3>{t('profile.interestsTitle')}</h3>
+              <p>{t('profile.interestsText')}</p>
             </div>
           </div>
           <div className="interest-list">
             <div className="interest-heading">
-              <h3>Vos centres d’intérêt</h3>
-              <button onClick={() => setEditing(true)}><Pencil size={13} /> Modifier</button>
+              <h3>{t('profile.interests')}</h3>
+              <button type="button" onClick={() => setEditing(true)}>
+                <Pencil size={13} /> {t('profile.editProfile')}
+              </button>
             </div>
             {topics.map((topic, index) => (
-              <div className="interest-row" key={topic.label}>
-                <span className={`interest-number ${topic.color}`}>0{index + 1}</span>
-                <span>{topic.label}</span>
+              <div className="interest-row" key={topic.id}>
+                <span className={`interest-number ${topic.color}`}>{`0${index + 1}`}</span>
+                <span>{t(`topics.${topic.id}`)}</span>
                 <ArrowUpRight size={14} />
               </div>
             ))}
@@ -240,9 +243,14 @@ function ProfileCard({ profile }) {
 
 export default function ProfilePage() {
   const { status, profile } = useAuth();
+  const { t } = useI18n();
 
   if (status === 'loading') {
-    return <div className="chat-loading"><Loader2 size={18} className="spin" /> Vérification de la session…</div>;
+    return (
+      <div className="chat-loading">
+        <Loader2 size={18} className="spin" /> {t('topbar.checking')}
+      </div>
+    );
   }
 
   if (!profile) {
@@ -252,9 +260,9 @@ export default function ProfilePage() {
   return (
     <>
       <PageHeading
-        eyebrow="ESPACE PERSONNEL"
-        title="Votre profil."
-        subtitle="Retrouvez vos informations et vos ressources enregistrées."
+        eyebrow={t('profile.eyebrow')}
+        title={t('profile.pageTitle')}
+        subtitle={t('profile.pageSubtitle')}
       />
       <ProfileCard profile={{ ...profile, email: profile.email ?? '' }} />
     </>

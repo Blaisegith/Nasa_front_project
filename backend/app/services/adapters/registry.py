@@ -12,8 +12,10 @@ from app.services.adapters.base import (
     GenerationAdapter,
     MediaAdapter,
     RagAdapter,
+    RetrievalAdapter,
     ScienceAdapter,
 )
+from app.services.adapters.retrieval_impl import LocalRetrieval
 from app.services.adapters.stubs import (
     UnavailableGeneration,
     UnavailableMedia,
@@ -25,6 +27,7 @@ _rag: RagAdapter = UnavailableRag()
 _media: MediaAdapter = UnavailableMedia()
 _science: ScienceAdapter = UnavailableScience()
 _generation: GenerationAdapter = UnavailableGeneration()
+_retrieval: RetrievalAdapter = LocalRetrieval()
 
 
 def get_rag() -> RagAdapter:
@@ -43,9 +46,13 @@ def get_generation() -> GenerationAdapter:
     return _generation
 
 
+def get_retrieval() -> RetrievalAdapter:
+    return _retrieval
+
+
 def register(capability: Capability, adapter: object) -> None:
     """Enregistre une implémentation réelle (utilisé par les phases ultérieures)."""
-    global _rag, _media, _science, _generation
+    global _rag, _media, _science, _generation, _retrieval
     if capability == "rag":
         _rag = adapter  # type: ignore[assignment]
     elif capability == "media":
@@ -54,6 +61,8 @@ def register(capability: Capability, adapter: object) -> None:
         _science = adapter  # type: ignore[assignment]
     elif capability == "generation":
         _generation = adapter  # type: ignore[assignment]
+    elif capability == "retrieval":
+        _retrieval = adapter  # type: ignore[assignment]
     else:  # pragma: no cover - garde-fou
         raise ValueError(f"Capacité inconnue : {capability}")
 
@@ -65,4 +74,5 @@ def capabilities_status() -> dict[str, dict]:
         "media": {"name": _media.name, "connected": bool(_media.available)},
         "science": {"name": _science.name, "connected": bool(_science.available)},
         "generation": {"name": _generation.name, "connected": bool(_generation.available)},
+        "retrieval": {"name": _retrieval.name, "connected": bool(_retrieval.available)},
     }

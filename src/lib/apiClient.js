@@ -38,7 +38,7 @@ export function resolveUrl(path) {
   return `${API_BASE_URL}${path}`;
 }
 
-export const UNAUTHORIZED_EVENT = 'techlabs:unauthorized';
+export const UNAUTHORIZED_EVENT = 'frameinff:unauthorized';
 
 async function parseBody(response) {
   const contentType = response.headers.get('content-type') ?? '';

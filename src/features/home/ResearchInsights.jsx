@@ -1,14 +1,52 @@
-﻿import { Compass, Flame, Rocket } from 'lucide-react';
+import { Compass, Flame, Rocket } from 'lucide-react';
+import LineChart from '../../components/LineChart.jsx';
+import { useI18n } from '../../i18n/I18nProvider.jsx';
 
 /**
- * Graphiques schÃ©matiques de la page d'accueil.
+ * Graphiques schématiques de la page d'accueil.
  *
- * Les valeurs ne sont pas des mesures : le libellÃ© Â« schÃ©matique Â» et la note de
- * bas de section doivent rester visibles (aucune donnÃ©e inventÃ©e prÃ©sentÃ©e
- * comme rÃ©elle).
+ * Les valeurs ne sont pas des mesures : le libellé « schéma » et la note de
+ * bas de section doivent rester visibles (aucune donnée inventée présentée
+ * comme réelle).
  */
-export default function TrendChart({ title, subtitle, axis, variant, series }) {
-  const transport = variant === 'transport';
+
+const TRANSPORT_SERIES = [
+  {
+    name: 'research.seriesConvectionEarth',
+    className: 'earth',
+    points: [[0, 71.4], [27.5, 48.2], [50, 25], [79.8, 8.3], [100, 3]],
+  },
+  {
+    name: 'research.seriesConvectionMicro',
+    className: 'microgravity',
+    points: [[0, 3.6], [50, 2.4], [100, 1.8]],
+  },
+  {
+    name: 'research.seriesDiffusion',
+    className: 'diffusion',
+    points: [[0, 4.8], [27.5, 35.7], [50, 40.5], [74.2, 19.6], [100, 4.8]],
+  },
+];
+
+const TEMPERATURE_SERIES = [
+  {
+    name: 'research.seriesEarth',
+    className: 'earth',
+    points: [[0, 6.5], [24.9, 56], [46.8, 85.1], [68.5, 43.5], [100, 6.5]],
+  },
+  {
+    name: 'research.seriesMicro',
+    className: 'microgravity',
+    points: [[0, 5.4], [27.9, 41.1], [50.6, 58.3], [74.5, 24.4], [100, 4.8]],
+  },
+];
+
+export default function TrendChart({
+  title, subtitle, axis, xLabel, series,
+}) {
+  const { t } = useI18n();
+  const translated = series.map((item) => ({ ...item, name: t(item.name) }));
+
   return (
     <article className="chart-card">
       <div className="chart-card-heading">
@@ -16,103 +54,67 @@ export default function TrendChart({ title, subtitle, axis, variant, series }) {
           <h3>{title}</h3>
           <p>{subtitle}</p>
         </div>
-        <span className="chart-tag">SCHÃ‰MA</span>
+        <span className="chart-tag">{t('common.schematic')}</span>
       </div>
-      <svg className="science-chart" viewBox="0 0 620 260" role="img" aria-label={`${title}, courbes schÃ©matiques`}>
-        <text className="chart-axis-title" x="17" y="125" transform="rotate(-90 17 125)">{axis}</text>
-        {[0, 1, 2, 3, 4].map((line) => {
-          const y = 24 + line * 42;
-          return (
-            <g key={line}>
-              <line className="chart-gridline" x1="62" y1={y} x2="592" y2={y} />
-              <text className="chart-tick" x="50" y={y + 4} textAnchor="end">{100 - line * 25}</text>
-            </g>
-          );
-        })}
-        <line className="chart-axis" x1="62" y1="24" x2="62" y2="192" />
-        <line className="chart-axis" x1="62" y1="192" x2="592" y2="192" />
-        <text className="chart-tick" x="62" y="211" textAnchor="middle">0</text>
-        <text className="chart-tick" x="327" y="211" textAnchor="middle">50</text>
-        <text className="chart-tick" x="592" y="211" textAnchor="middle">100</text>
-        <text className="chart-x-title" x="327" y="237" textAnchor="middle">{transport ? 'Position relative autour de la flamme' : 'Position relative dans la flamme'}</text>
-        {transport ? (
-          <>
-            <path className="chart-line earth" d="M62 72 C120 82 155 91 208 111 S292 140 327 150 S430 170 485 178 S555 184 592 187" />
-            <path className="chart-line microgravity" d="M62 186 C150 187 240 188 327 188 S500 189 592 189" />
-            <path className="chart-line diffusion" d="M62 184 C125 166 165 142 208 132 S288 119 327 124 S405 145 455 159 S545 178 592 184" />
-          </>
-        ) : (
-          <>
-            <path className="chart-line earth" d="M62 181 C110 166 148 137 194 98 S270 47 310 49 S386 82 425 119 S520 164 592 181" />
-            <path className="chart-line microgravity" d="M62 183 C118 168 160 148 210 123 S290 91 330 94 S412 123 457 151 S545 174 592 184" />
-          </>
-        )}
-      </svg>
-      <div className="chart-legend">
-        {series.map((item) => (
-          <span key={item.name}><i className={item.className} />{item.name}</span>
-        ))}
-      </div>
+      <LineChart
+        bare
+        series={translated}
+        yLabel={axis}
+        xLabel={xLabel}
+      />
     </article>
   );
 }
 
 export function ResearchInsights() {
+  const { t } = useI18n();
+
   return (
     <section className="research-section">
       <div className="research-heading">
         <div>
-          <span className="eyebrow"><span /> COMPORTEMENT DU FEU</span>
-          <h2>Quand la gravitÃ© disparaÃ®t, la flamme change.</h2>
+          <span className="eyebrow"><span /> {t('research.eyebrow')}</span>
+          <h2>{t('research.title')}</h2>
         </div>
-        <span className="chart-context">MICROGRAVITÃ‰ Â· ISS</span>
+        <span className="chart-context">{t('research.context')}</span>
       </div>
       <div className="science-stats">
         <article className="science-stat">
           <span className="stat-icon coral"><Flame size={17} /></span>
-          <div className="stat-value">â‰ˆ 0</div>
-          <h3>Convection naturelle</h3>
-          <p>Les gaz chauds ne montent presque plus.</p>
+          <div className="stat-value">≈ 0</div>
+          <h3>{t('research.stat1Title')}</h3>
+          <p>{t('research.stat1Text')}</p>
         </article>
         <article className="science-stat">
           <span className="stat-icon blue"><Compass size={17} /></span>
-          <div className="stat-value">360Â°</div>
-          <h3>Diffusion autour de la flamme</h3>
-          <p>Lâ€™oxygÃ¨ne se rÃ©partit dans toutes les directions.</p>
+          <div className="stat-value">360°</div>
+          <h3>{t('research.stat2Title')}</h3>
+          <p>{t('research.stat2Text')}</p>
         </article>
         <article className="science-stat">
           <span className="stat-icon green"><Rocket size={17} /></span>
           <div className="stat-value">2</div>
-          <h3>Modes de transfert</h3>
-          <p>Convection et diffusion, en proportions diffÃ©rentes.</p>
+          <h3>{t('research.stat3Title')}</h3>
+          <p>{t('research.stat3Text')}</p>
         </article>
       </div>
       <div className="chart-grid">
         <TrendChart
-          title="Le transport des gaz"
-          subtitle="En microgravitÃ©, la convection sâ€™efface."
-          axis="IntensitÃ© relative"
-          variant="transport"
-          series={[
-            { name: 'Convection Â· Terre', className: 'earth' },
-            { name: 'Convection Â· microgravitÃ©', className: 'microgravity' },
-            { name: 'Diffusion molÃ©culaire', className: 'diffusion' },
-          ]}
+          title={t('research.transportTitle')}
+          subtitle={t('research.transportSubtitle')}
+          axis={t('research.transportAxis')}
+          xLabel={t('research.transportX')}
+          series={TRANSPORT_SERIES}
         />
         <TrendChart
-          title="TempÃ©rature autour de la flamme"
-          subtitle="Le profil devient plus diffus en microgravitÃ©."
-          axis="TempÃ©rature relative"
-          variant="temperature"
-          series={[
-            { name: 'Terre', className: 'earth' },
-            { name: 'MicrogravitÃ©', className: 'microgravity' },
-          ]}
+          title={t('research.temperatureTitle')}
+          subtitle={t('research.temperatureSubtitle')}
+          axis={t('research.temperatureAxis')}
+          xLabel={t('research.temperatureX')}
+          series={TEMPERATURE_SERIES}
         />
       </div>
-      <p className="chart-disclaimer">
-        Courbes schÃ©matiques pour illustrer les tendances ; les valeurs varient selon le combustible et lâ€™expÃ©rience.
-      </p>
+      <p className="chart-disclaimer">{t('research.disclaimer')}</p>
     </section>
   );
 }

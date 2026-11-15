@@ -32,6 +32,7 @@ async def capabilities() -> dict:
         "capabilities": registry.capabilities_status(),
         "chat": "/api/v1/chat",
         "media": "/api/v1/media/search",
+        "retrieval": "/api/v1/retrieval/search",
         "science": "/api/v1/science/compute",
     }
 

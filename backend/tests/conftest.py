@@ -12,12 +12,22 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 # La configuration doit être figée avant l'import de l'application.
-_TMP_DIR = tempfile.mkdtemp(prefix="techlabs-test-")
+_TMP_DIR = tempfile.mkdtemp(prefix="frameinff-test-")
 os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{_TMP_DIR}/test.db"
 os.environ["AVATAR_DIR"] = os.path.join(_TMP_DIR, "avatars")
+os.environ["ATTACHMENT_DIR"] = os.path.join(_TMP_DIR, "attachments")
 os.environ["BACKEND_ENV"] = "test"
 os.environ["RATE_LIMIT_PER_MINUTE"] = "500"
 os.environ["SESSION_COOKIE_SECURE"] = "false"
+
+# Recherche multimodale : corpus vide et isolé. Sans cela, les tests
+# dépendraient du corpus de développement et le nombre de messages d'une
+# conversation changerait selon la machine.
+_CORPUS_DIR = os.path.join(_TMP_DIR, "corpus")
+os.makedirs(_CORPUS_DIR, exist_ok=True)
+os.environ["MULTIMODAL_CORPUS_DIRS"] = _CORPUS_DIR
+os.environ["MULTIMODAL_INDEX_DB"] = os.path.join(_TMP_DIR, "retrieval-index.db")
+os.environ["MULTIMODAL_FRAME_DIR"] = os.path.join(_TMP_DIR, "frames")
 
 from app.core.db import Base, get_db  # noqa: E402
 from app.core.ratelimit import reset_rate_limit  # noqa: E402

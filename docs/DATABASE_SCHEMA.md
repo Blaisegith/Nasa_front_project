@@ -1,4 +1,4 @@
-# DATABASE_SCHEMA — TechLabs
+# DATABASE_SCHEMA — Frame in Freefall AI
 
 Deux implémentations du même schéma :
 
@@ -94,8 +94,28 @@ Index : `(user_id, updated_at desc)`.
 
 Index : `(conversation_id, sequence)`.
 
-`content` d'un message `user` : `{ "text": "…" }`.
+`content` d'un message `user` : `{ "text": "…", "attachments": [ … ] }`, où chaque
+pièce jointe suit le schéma `AttachmentRef` (voir `API_DOCUMENTATION.md` §4) :
+`attachment_id`, `filename`, `media_type`, `size_bytes`, `url`.
 `content` d'un message `assistant` : réponse complète au format `answer` (voir `API_DOCUMENTATION.md` §5).
+
+### 2.1 Pièces jointes : pas de table dédiée
+
+Les fichiers vivent sur le disque (`ATTACHMENT_DIR/<user_id>/<uuid>.<ext>`), et
+leurs métadonnées sont enregistrées dans `messages.content.attachments`. Ce
+choix garde une seule source de vérité pour l'historique : ce que l'utilisateur
+voit est exactement ce qui a été persisté avec sa question.
+
+Conséquences :
+
+- aucune suppression en cascade à gérer pour un retrait d'historique ;
+- la lecture d'un fichier passe toujours par `GET /api/v1/chat/attachments/{id}`,
+  qui vérifie la propriété **côté serveur** : l'URL ne suffit jamais ;
+- le RAG, quand il sera branché, indexera par `attachment_id` ; une table
+  `attachments` deviendra utile à ce moment-là (index, cycle de vie, purge).
+
+Les fichiers orphelins (téléversés, jamais envoyés) sont tolérés : ils sont
+isolés par utilisateur et supprimables par une tâche de fond.
 
 ---
 
@@ -186,9 +206,9 @@ Politiques :
 ## 5. Rôle applicatif
 
 ```sql
-create role techlabs_app login password '<mot de passe fort>';
-grant usage on schema public to techlabs_app;
-grant select, insert, update, delete on all tables in schema public to techlabs_app;
+create role frameinff_app login password '<mot de passe fort>';
+grant usage on schema public to frameinff_app;
+grant select, insert, update, delete on all tables in schema public to frameinff_app;
 ```
 
 Le rôle `service_role` de Supabase (ou un rôle d'admin dédié) reste requis pour
@@ -199,7 +219,8 @@ les opérations d'ingestion et de maintenance.
 ## 6. Migration depuis la version locale du frontend
 
 L'ancienne version stockait le profil dans `localStorage['nasa-profile']`
-(`name`, `email`, `bio`, `photo` en data URL).
+(`name`, `email`, `bio`, `photo` en data URL). Les clés de stockage sont
+désormais préfixées `frameinff-` (voir `src/lib/storage.js`).
 
 À la première connexion, `AuthProvider` :
 

@@ -1,4 +1,4 @@
-﻿"""Routes d'authentification."""
+"""Routes d'authentification."""
 
 from __future__ import annotations
 

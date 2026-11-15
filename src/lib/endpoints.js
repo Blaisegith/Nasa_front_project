@@ -1,5 +1,5 @@
 /**
- * Points d'entrée de l'API TechLabs.
+ * Points d'entrée de l'API Frame in Freefall.
  *
  * Ce fichier est le seul endroit qui connaît les chemins HTTP. Les composants
  * appellent ces fonctions, jamais `fetch` directement.
@@ -47,6 +47,14 @@ export const endpoints = {
   chat: (payload) =>
     api.post('/api/v1/chat', payload, { timeout: CHAT_TIMEOUT_MS }),
 
+  uploadChatAttachment: (blob, filename) => {
+    const form = new FormData();
+    form.append('file', blob, filename);
+    return api.upload('/api/v1/chat/attachments', form);
+  },
+
+  chatAttachmentUrl: (attachmentId) => `/api/v1/chat/attachments/${attachmentId}`,
+
   // --- Multimodal / science (non branchés) -----------------------------------
   searchMedia: (query, options = {}) => {
     const params = new URLSearchParams({ q: query });
@@ -56,10 +64,10 @@ export const endpoints = {
   },
 };
 
-/** Réponse de repli quand le service de génération n'est pas branché. */
-export const SERVICE_UNAVAILABLE_MESSAGE =
-  'Le service de génération de réponses n’est pas encore connecté sur ce serveur. Votre question a bien été enregistrée dans l’historique.';
-
+/**
+ * Un adaptateur non branché renvoie `501 not_implemented`.
+ * Le message affiché est fourni par l'i18n (`answer.serviceUnavailable`).
+ */
 export function isServiceUnavailable(error) {
   return error?.code === 'not_implemented';
 }

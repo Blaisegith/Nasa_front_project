@@ -30,7 +30,7 @@ async def test_create_session_sets_httponly_cookie(client: AsyncClient) -> None:
     assert body["profile"]["user_id"]
     assert body["weak_auth"] is True
 
-    cookie = response.cookies.get("techlabs_session")
+    cookie = response.cookies.get("frameinff_session")
     assert cookie
     set_cookie = response.headers["set-cookie"].lower()
     assert "httponly" in set_cookie

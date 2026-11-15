@@ -43,12 +43,18 @@ async def get_db() -> AsyncIterator[AsyncSession]:
 
 
 async def init_db() -> None:
-    """Crée les tables si elles n'existent pas.
+    """Crée les tables si elles n'existent pas — **SQLite uniquement**.
 
     En production Supabase, le schéma et les politiques RLS sont appliqués par
     `backend/migrations/*.sql` (source de vérité). Cette fonction ne sert qu'au
-    développement local et aux tests.
+    développement local et aux tests : sur PostgreSQL, laisser l'ORM créer les
+    tables produirait des colonnes `varchar(36)` au lieu des `uuid` du schéma et
+    contournerait la RLS. Elle est donc explicitement écartée hors SQLite.
     """
+    settings = get_settings()
+    if not settings.database_url.startswith("sqlite"):
+        return
+
     # Import tardif pour que les modèles soient enregistrés sur Base.metadata.
     from app import models  # noqa: F401
 

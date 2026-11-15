@@ -1,6 +1,7 @@
-# SECURITY — TechLabs
+# SECURITY — Frame in Freefall AI
 
-Périmètre de cette version : sessions utilisateurs, profils, conversations.
+Périmètre de cette version : sessions utilisateurs, profils, conversations,
+pièces jointes du chat.
 Le RAG, le multimodal, le stockage de documents privés et le déploiement ne sont
 pas encore branchés ; les mesures correspondantes sont indiquées comme à venir.
 
@@ -38,8 +39,12 @@ pour le prototype. Avant toute mise en production avec des données réelles :
 | `user_id` non falsifiable | jamais lu depuis le corps, l'URL ou un en-tête ; dérivé du cookie signé |
 | Isolation | toute requête filtrée par `user_id` ; ressource d'autrui → `404` |
 | RLS | activée sur toutes les tables privées, en fail-closed (`current_user_id()` NULL → 0 ligne) |
+| Contexte RLS | `app.user_id` posé à chaque requête authentifiée (`core/rls.py`, transaction courante) ; sans effet en SQLite |
 | Avatars | chemin disque dérivé de l'`user_id` de session, jamais fourni par le client |
-| Uploads | type MIME et taille (2 Mo) validés serveur ; extension reconstruite |
+| Uploads (avatars) | type MIME et taille (2 Mo) validés serveur ; extension reconstruite |
+| Pièces jointes du chat | liste blanche de types MIME, 10 Mo max, 5 par question, nom assaini, nom de fichier aléatoire, un dossier par utilisateur |
+| Lecture des pièces jointes | `GET /api/v1/chat/attachments/{id}` revérifie la propriété côté serveur : `404` pour un fichier d'autrui |
+| Fichiers déposés | jamais exécutés, jamais servis depuis un chemin fourni par le client |
 | Erreurs | aucun détail technique renvoyé au client (`500` générique) |
 | CORS | origines déclarées explicitement, `allow_credentials` activé, aucune `*` |
 | Secrets | jamais dans le bundle : seul `VITE_*` est exposé au navigateur |
@@ -53,6 +58,7 @@ pour le prototype. Avant toute mise en production avec des données réelles :
 | Contrôle | Résultat |
 |---|---|
 | Secrets dans l'historique Git (`sk-`, `AIza`, JWT, `SUPABASE_*`, `GROQ_API_KEY`, clés privées) | **aucun** |
+| Secrets dans l'arborescence de travail | **aucun** (`npm run check:secrets`, code de sortie non nul si trouvés) |
 | `.env` committé | **non** (`.gitignore` : `.env`, `.env.*`, `!.env.example`) |
 | Clé de session par défaut en production | **bloquée** au démarrage (`validate_runtime`) |
 | `SESSION_COOKIE_SECURE=false` en production | **bloqué** au démarrage |
@@ -60,6 +66,10 @@ pour le prototype. Avant toute mise en production avec des données réelles :
 | `user_id` envoyé par le client | **ignoré** (test automatisé) |
 | Session révoquée | **401** (test automatisé) |
 | E-mail dupliqué / espaces / majuscules | normalisé, même compte (test automatisé) |
+| Téléversement d'un type non autorisé | **422** (test automatisé) |
+| Fichier vide / trop volumineux | **422** / **413** (test automatisé) |
+| Lecture de la pièce jointe d'un autre utilisateur | **404** (test automatisé) |
+| Identifiant de pièce jointe inconnu dans `POST /chat` | **404**, question non enregistrée (test automatisé) |
 
 ---
 

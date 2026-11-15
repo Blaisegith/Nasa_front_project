@@ -1,4 +1,4 @@
-"""Configuration centralisée du backend TechLabs.
+"""Configuration centralisée du backend Frame in Freefall AI.
 
 Toutes les valeurs sont surchargeables par variables d'environnement ou `.env`.
 Aucune valeur sensible ne doit être écrite en dur hors développement local.
@@ -23,11 +23,11 @@ class Settings(BaseSettings):
     backend_env: str = "development"
     backend_host: str = "0.0.0.0"
     backend_port: int = 8000
-    app_name: str = "TechLabs API"
+    app_name: str = "Frame in Freefall AI API"
 
     # --- Sécurité / sessions ---
     backend_secret_key: str = "dev-only-insecure-key-change-me"
-    session_cookie_name: str = "techlabs_session"
+    session_cookie_name: str = "frameinff_session"
     session_ttl_hours: int = 24 * 7
     session_cookie_secure: bool = False
     session_cookie_samesite: str = "lax"
@@ -36,8 +36,8 @@ class Settings(BaseSettings):
 
     # --- Base de données ---
     # Supabase (production) : postgresql+asyncpg://postgres.<ref>:<pwd>@aws-0-<region>.pooler.supabase.com:6543/postgres
-    # Développement local   : sqlite+aiosqlite:///./techlabs.db
-    database_url: str = "sqlite+aiosqlite:///./techlabs.db"
+    # Développement local   : sqlite+aiosqlite:///./frameinff.db
+    database_url: str = "sqlite+aiosqlite:///./frameinff.db"
     database_echo: bool = False
 
     # --- Supabase (utilisé par les services, pas par le navigateur) ---
@@ -49,6 +49,16 @@ class Settings(BaseSettings):
     avatar_dir: str = "./var/avatars"
     avatar_max_bytes: int = 2 * 1024 * 1024
     avatar_allowed_content_types: str = "image/jpeg,image/png,image/webp"
+
+    # --- Pièces jointes du chat ---
+    # Le backend ne traite que des documents, images et vidéos ; aucun fichier
+    # n'est exécuté et les types acceptés sont explicitement listés.
+    attachment_dir: str = "./var/attachments"
+    attachment_max_bytes: int = 10 * 1024 * 1024
+    attachment_max_per_message: int = 5
+    attachment_allowed_content_types: str = (
+        "application/pdf,image/png,image/jpeg,image/webp,video/mp4,video/quicktime"
+    )
 
     # --- Fournisseur génératif (non branché) ---
     groq_api_key: str = ""

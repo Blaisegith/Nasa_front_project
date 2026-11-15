@@ -6,11 +6,11 @@
  */
 
 export const STORAGE_KEYS = {
-  profile: 'nasa-profile',
-  theme: 'nasa-theme',
-  draft: 'nasa-chat-draft',
-  settings: 'nasa-settings',
-  cachedConversations: 'nasa-conversations-cache',
+  profile: 'frameinff-profile',
+  theme: 'frameinff-theme',
+  draft: 'frameinff-chat-draft',
+  settings: 'frameinff-settings',
+  cachedConversations: 'frameinff-conversations-cache',
 };
 
 export function readJSON(key, fallback = null) {

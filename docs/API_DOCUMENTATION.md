@@ -1,4 +1,4 @@
-# API_DOCUMENTATION — TechLabs
+# API_DOCUMENTATION — Frame in Freefall AI
 
 Base URL : `http://localhost:8000` (développement), `/api` via proxy Vite en dev, même origine en production.
 
@@ -23,7 +23,7 @@ Toutes les réponses d'erreur suivent le même format :
 ### `GET /api/v1/system/health`
 
 ```json
-{ "status": "ok", "app": "TechLabs API", "env": "development", "database": "sqlite" }
+{ "status": "ok", "app": "Frame in Freefall AI API", "env": "development", "database": "sqlite" }
 ```
 
 ### `GET /api/v1/system/capabilities`
@@ -61,7 +61,7 @@ Crée l'utilisateur s'il n'existe pas, puis ouvre une session.
 
 `display_name` est optionnel : à défaut, il est déduit de l'e-mail.
 
-**201 Created** + cookie `techlabs_session` (`HttpOnly`, `SameSite=Lax`, `Secure` si configuré) :
+**201 Created** + cookie `frameinff_session` (`HttpOnly`, `SameSite=Lax`, `Secure` si configuré) :
 
 ```json
 {
@@ -195,18 +195,65 @@ utilisateur renvoie `404` (son existence n'est pas révélée).
 
 ---
 
-## 5. Chat — point d'entrée du RAG et de la génération
+## 5. Pièces jointes du chat
+
+### `POST /api/v1/chat/attachments`
+
+`multipart/form-data`, champ `file`. Authentifié (`401` sinon).
+
+| Règle | Valeur par défaut |
+|---|---|
+| Types acceptés | `application/pdf`, `image/png`, `image/jpeg`, `image/webp`, `video/mp4`, `video/quicktime` |
+| Taille maximale | 10 Mo (`413` au-delà) |
+| Fichier vide | `422` |
+| Type hors liste | `422` |
+| Nombre par message | 5 (`422` si dépassé, contrôlé sur `POST /chat`) |
+
+Le nom d'origine est conservé pour l'affichage mais **assaini** (caractères
+dangereux remplacés, extension imposée par le type MIME). Le fichier est stocké
+sous un nom aléatoire, dans un dossier propre à l'utilisateur ; aucun chemin
+n'est jamais renvoyé au client.
+
+**201 Created**
+
+```json
+{
+  "attachment_id": "9f2c1d7b4a6e4c1f8b3d5e7a9c0b2d4f",
+  "filename": "rapport-combustion.pdf",
+  "content_type": "application/pdf",
+  "media_type": "document",
+  "size_bytes": 184320,
+  "url": "/api/v1/chat/attachments/9f2c1d7b4a6e4c1f8b3d5e7a9c0b2d4f"
+}
+```
+
+### `GET /api/v1/chat/attachments/{attachment_id}`
+
+Renvoie le fichier (`FileResponse`). L'accès est **revérifié côté serveur** :
+l'identifiant d'un autre utilisateur donne `404`. Un identifiant inconnu ou un
+fichier manquant donne également `404`.
+
+---
+
+## 6. Chat — point d'entrée du RAG et de la génération
 
 ### `POST /api/v1/chat`
 
 ```json
-{ "conversation_id": null, "text": "Pourquoi la flamme est-elle sphérique ?" }
+{
+  "conversation_id": null,
+  "text": "Pourquoi la flamme est-elle sphérique ?",
+  "attachments": [{ "attachment_id": "9f2c1d7b4a6e4c1f8b3d5e7a9c0b2d4f" }]
+}
 ```
 
 - `conversation_id` absent : une conversation est créée avec le titre = début de la question.
+- `attachments` facultatif. Les identifiants sont résolus **côté serveur**, avec
+  vérification de propriété : un identifiant d'autrui ou inconnu → `404`.
 - La question est **enregistrée avant** toute génération.
 - Si le générateur n'est pas branché : **501** avec `detail.conversation_id`,
-  `detail.message_id` et `detail.question_persisted = true`.
+  `detail.message_id`, `detail.question_persisted = true` et
+  `detail.attachments_persisted`.
 
 Exemple de réponse en production (générateur branché) :
 
@@ -224,14 +271,18 @@ Exemple de réponse en production (générateur branché) :
     "references": [],
     "media": [],
     "charts": [],
-    "limitations": []
+    "limitations": [],
+    "blocks": []
   }
 }
 ```
 
+`charts[].kind` vaut `line`, `area` ou `bar` : le frontend choisit le rendu
+correspondant sans rien inventer.
+
 ---
 
-## 6. Multimodal et science — contrats ouverts
+## 7. Multimodal et science — contrats ouverts
 
 ### `GET /api/v1/media/search?q=flamme&media_type=image,video&limit=8`
 
@@ -247,7 +298,7 @@ Exemple de réponse en production (générateur branché) :
 
 ---
 
-## 7. Conventions
+## 8. Conventions
 
 | Sujet | Règle |
 |---|---|
@@ -255,5 +306,6 @@ Exemple de réponse en production (générateur branché) :
 | Isolement | toute ressource est filtrée par `user_id` ; une ressource d'autrui → `404` |
 | Format de réponse | `schema_version` obligatoire, sections optionnelles |
 | Contenu inventé | interdit : une section absente n'est pas rendue |
+| Fichiers | jamais exécutés, type MIME sur liste blanche, taille bornée, nom aléatoire |
 | Quotas | `429` avec `Retry-After` sur `/auth/*` |
 | Secrets | aucune clé côté client ; `SUPABASE_SERVICE_ROLE_KEY` et `GROQ_API_KEY` restent serveur |

@@ -1,0 +1,126 @@
+/*
+ * Jetons de couleur — source unique du thème clair et du thème sombre.
+ *
+ * Tout composant doit passer par ces variables : aucune couleur littérale ne
+ * doit être écrite dans un composant. Le thème sombre n'est pas une inversion
+ * du thème clair, il possède ses propres surfaces et ses propres accents.
+ *
+ * Vérification automatisée : `npm run check:contrast` garantit qu'aucun couple
+ * texte / fond descendant ne passe sous les seuils WCAG AA.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg: #f3f7fc;
+  --bg-glow: rgba(216, 233, 253, .55);
+  --card: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f8fbfe;
+  --surface-3: #eef4fb;
+  --surface-inset: #f1f6fc;
+
+  /* Textes */
+  --ink: #17385f;
+  --ink-2: #4d6a8c;
+  --ink-3: #526c8b;
+  --ink-inverse: #ffffff;
+
+  /* Lignes */
+  --line: #e1eaf3;
+  --line-strong: #c9d8e8;
+
+  /* Accents */
+  --accent: #1267eb;
+  --accent-strong: #0756cf;
+  --accent-soft: #eaf3ff;
+  --accent-ink: #ffffff;
+  --coral: #ee8468;
+  --coral-soft: #fff1eb;
+  --success: #1f7a68;
+  --success-soft: #eaf5ef;
+  --warning: #8f6318;
+  --warning-soft: #fdf7ee;
+  --danger: #c0392b;
+  --danger-soft: #fdf1f1;
+
+  /* Graphiques */
+  --chart-axis: #c9d9ea;
+  --chart-grid: #e6eef7;
+  --chart-tick: #526c8b;
+  --chart-label: #4d6a8c;
+  --chart-tooltip-bg: #0f2138;
+  --chart-tooltip-ink: #f2f7fd;
+  --series-1: #1267eb;
+  --series-2: #d9613f;
+  --series-3: #278d78;
+  --series-4: #c08a1f;
+  --series-5: #7a5bd6;
+  --series-6: #2f8fb8;
+
+  /* Divers */
+  --focus-ring: rgba(28, 96, 190, .28);
+  --scrim: rgba(16, 35, 61, .4);
+  --shadow-color: 6, 26, 48;
+
+  /* Dock de saisie : voile de fond pour la barre sticky */
+  --dock-fade: rgba(243, 247, 252, .94);
+}
+
+/*
+ * Thème sombre.
+ *
+ * `.app-shell` porte lui-même l'attribut : le sélecteur est volontairement
+ * large pour couvrir les portails et les éléments rendus hors du shell.
+ */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0d1726;
+  --bg-glow: rgba(37, 68, 105, .25);
+  --card: #142237;
+  --surface: #142237;
+  --surface-2: #192b42;
+  --surface-3: #1c3049;
+  --surface-inset: #0f1e31;
+
+  --ink: #e3edf8;
+  --ink-2: #c1d3e6;
+  --ink-3: #a3b6cc;
+  --ink-inverse: #f4f9ff;
+
+  --line: #293c54;
+  --line-strong: #38516e;
+
+  --accent: #5b9bff;
+  --accent-strong: #8ebaff;
+  --accent-soft: #1a3352;
+  --accent-ink: #06101d;
+  --coral: #ff9d7d;
+  --coral-soft: #3b2c32;
+  --success: #58c4a8;
+  --success-soft: #1d3838;
+  --warning: #e0b263;
+  --warning-soft: #2a2318;
+  --danger: #f08a7c;
+  --danger-soft: #3a2323;
+
+  --chart-axis: #3a5372;
+  --chart-grid: #22344c;
+  --chart-tick: #a3b6cc;
+  --chart-label: #c1d3e6;
+  --chart-tooltip-bg: #0a1524;
+  --chart-tooltip-ink: #eaf2fb;
+  --series-1: #5b9bff;
+  --series-2: #ff9d7d;
+  --series-3: #4ec2a5;
+  --series-4: #e8c069;
+  --series-5: #a48bf0;
+  --series-6: #56b4d6;
+
+  --focus-ring: rgba(94, 158, 255, .34);
+  --scrim: rgba(5, 11, 20, .72);
+  --shadow-color: 0, 0, 0;
+  --dock-fade: rgba(13, 23, 38, .94);
+}

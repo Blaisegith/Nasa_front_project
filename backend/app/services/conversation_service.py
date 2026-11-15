@@ -178,6 +178,7 @@ async def prepare_chat(
     user_id: str,
     conversation_id: str | None,
     text: str,
+    attachments: list[dict] | None = None,
 ) -> tuple[Conversation, Message]:
     """Enregistre la question de l'utilisateur.
 
@@ -194,11 +195,17 @@ async def prepare_chat(
             db, user_id=user_id, title=text[:80] if text else None
         )
 
+    content: dict = {"text": text}
+    if attachments:
+        # Les métadonnées de pièces jointes voyagent avec le message : le RAG et
+        # le multimodal les retrouveront dans l'historique, sans dupliquer d'état.
+        content["attachments"] = attachments
+
     message = await append_message(
         db,
         conversation=conversation,
         role="user",
-        content={"text": text},
+        content=content,
     )
     return conversation, message
 
@@ -220,7 +227,14 @@ async def record_answer(
 
 
 def answer_status_to_message_status(answer: Answer) -> str:
-    if not (answer.summary or answer.scientific_explanation or answer.blocks):
+    """Statut d'un message assistant.
+
+    Une réponse étayée par des médias, des graphiques ou des références est
+    `partial` : elle contient des éléments réels mais pas de synthèse rédigée.
+    Elle n'est `unavailable` que si elle ne contient rien.
+    """
+    has_evidence = bool(answer.media or answer.charts or answer.references)
+    if not (answer.summary or answer.scientific_explanation or answer.blocks or has_evidence):
         return "unavailable"
     if answer.limitations or not answer.references:
         return "partial"

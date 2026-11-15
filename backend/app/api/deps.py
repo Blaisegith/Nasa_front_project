@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.db import get_db
+from app.core.rls import apply_rls_context
 from app.models.user import Profile, SessionRecord, User
 from app.services import auth_service
 
@@ -33,6 +34,9 @@ def read_session_token(request: Request) -> str | None:
 
 async def get_principal(db: DbSession, request: Request) -> Principal:
     user, record, profile = await auth_service.require_user(db, read_session_token(request))
+    # RLS Supabase : la requête ne voit que les lignes de l'utilisateur courant.
+    # En SQLite l'appel est sans effet (pas de RLS, filtres `user_id` explicites).
+    await apply_rls_context(db, user.id)
     return Principal(user=user, session=record, profile=profile)
 
 

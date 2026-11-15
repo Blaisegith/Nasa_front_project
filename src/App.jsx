@@ -1,30 +1,50 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Menu, Moon, Settings, Sun, UserRound,
+  Globe, Menu, Moon, Settings, Sun, Users,
 } from 'lucide-react';
-import { fallbackArticles, navigation, sectionCopy } from './data/constants.js';
+import {
+  PLATFORM_NAME, TEAM_NAME, fallbackArticles, navigation,
+} from './data/constants.js';
 import { readString, writeString, STORAGE_KEYS } from './lib/storage.js';
-import { profileInitials } from './lib/format.js';
-import { resolveUrl } from './lib/apiClient.js';
+import { decodeText } from './lib/format.js';
+import Logo from './components/Logo.jsx';
+import UserMenu from './components/UserMenu.jsx';
 import { useNasaArticles } from './lib/useNasaArticles.js';
 import { AuthProvider, useAuth } from './state/AuthProvider.jsx';
-import { ConversationProvider, useConversations } from './state/ConversationProvider.jsx';
+import { ConversationProvider } from './state/ConversationProvider.jsx';
+import { I18nProvider, useI18n } from './i18n/I18nProvider.jsx';
 import HomePage from './features/home/HomePage.jsx';
 import ChatPage from './features/chat/ChatPage.jsx';
 import LibraryPage from './features/library/LibraryPage.jsx';
 import ProfilePage from './features/profile/ProfilePage.jsx';
 import SettingsPage from './features/settings/SettingsPage.jsx';
 
+function LanguageToggle({ compact = false }) {
+  const { locale, setLocale } = useI18n();
+  return (
+    <button
+      className={`icon-button language-toggle ${compact ? 'compact' : ''}`}
+      onClick={() => setLocale(locale === 'fr' ? 'en' : 'fr')}
+      aria-label={`Langue : ${locale === 'fr' ? 'français' : 'anglais'}`}
+      title={locale === 'fr' ? 'Passer en anglais' : 'Passer en français'}
+    >
+      <Globe size={16} />
+      <span>{locale.toUpperCase()}</span>
+    </button>
+  );
+}
+
 function Shell() {
+  const { t, locale } = useI18n();
   const [activePage, setActivePage] = useState('home');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [articleFilter, setArticleFilter] = useState('Tous');
+  const [articleFilter, setArticleFilter] = useState('all');
   const [draft, setDraft] = useState('');
   const [savedArticles, setSavedArticles] = useState([]);
   const [theme, setTheme] = useState(() => (readString(STORAGE_KEYS.theme) === 'dark' ? 'dark' : 'light'));
 
-  const { status, profile } = useAuth();
+  const { profile } = useAuth();
   const nasaArticles = useNasaArticles();
   const articles = nasaArticles.length ? nasaArticles : fallbackArticles;
 
@@ -32,14 +52,13 @@ function Shell() {
     writeString(STORAGE_KEYS.theme, theme);
   }, [theme]);
 
-  const { ask } = useConversations();
-  const activeCopy = sectionCopy[activePage] ?? sectionCopy.home;
-
   const filteredArticles = useMemo(() => articles.filter((article) => {
-    const matchesFilter = articleFilter === 'Tous' || article.category === articleFilter;
-    const searchable = `${article.title} ${article.description}`.toLocaleLowerCase('fr');
-    return matchesFilter && searchable.includes(searchQuery.toLocaleLowerCase('fr'));
-  }), [articles, articleFilter, searchQuery]);
+    const matchesFilter = articleFilter === 'all' || article.category === articleFilter;
+    const haystack = `${article.titleKey ? t(article.titleKey) : decodeText(article.title ?? '')} `
+      + `${article.textKey ? t(article.textKey) : decodeText(article.description ?? '')}`
+      .toLocaleLowerCase(locale);
+    return matchesFilter && haystack.includes(searchQuery.toLocaleLowerCase());
+  }), [articles, articleFilter, searchQuery, t, locale]);
 
   const toggleSaved = (title) => {
     setSavedArticles((current) => (current.includes(title)
@@ -47,8 +66,9 @@ function Shell() {
       : [...current, title]));
   };
 
-  const avatar = resolveUrl(profile?.avatar_url);
-  const greeting = profile ? `Bonjour, ${profile.display_name}` : 'Bienvenue, explorateur';
+  const greeting = profile
+    ? t('home.greeting', { name: profile.display_name })
+    : t('home.welcome');
 
   const goTo = (page) => {
     setActivePage(page);
@@ -57,72 +77,91 @@ function Shell() {
 
   return (
     <div className="app-shell" data-theme={theme}>
+      <a className="skip-link" href="#contenu">{t('nav.skipToContent')}</a>
+
       <aside className={`sidebar ${mobileNavOpen ? 'sidebar-open' : ''}`}>
-        <div className="nav-caption">VOTRE ESPACE</div>
-        <nav className="main-nav" aria-label="Navigation principale">
-          {navigation.map(({ id, label, icon: Icon }) => (
+        <a
+          className="sidebar-brand"
+          href="#home"
+          onClick={(event) => { event.preventDefault(); goTo('home'); }}
+        >
+          <span className="logo-lockup-mark"><Logo size="md" /></span>
+          <span className="brand-copy">
+            <strong>{PLATFORM_NAME}</strong>
+            <small>{t('topbar.tagline')}</small>
+          </span>
+        </a>
+        <div className="nav-caption">{t('nav.workspace')}</div>
+        <nav className="main-nav" aria-label={t('nav.main')}>
+          {navigation.map(({ id, labelKey, icon: Icon }) => (
             <button
               key={id}
               className={`nav-link ${activePage === id ? 'active' : ''}`}
               onClick={() => goTo(id)}
               aria-current={activePage === id ? 'page' : undefined}
             >
-              <Icon size={17} strokeWidth={1.8} /><span>{label}</span>
+              <Icon size={17} strokeWidth={1.8} /><span>{t(labelKey)}</span>
             </button>
           ))}
         </nav>
         <div className="sidebar-bottom">
+          <div className="sidebar-team" title={t('footer.teamTitle', { team: TEAM_NAME })}>
+            <span className="sidebar-team-mark" aria-hidden="true"><Users size={15} /></span>
+            <span className="sidebar-team-copy">
+              <small>{t('footer.teamLabel')}</small>
+              <strong>{TEAM_NAME}</strong>
+            </span>
+          </div>
           <button
             className={`nav-link settings-link ${activePage === 'settings' ? 'active' : ''}`}
             onClick={() => goTo('settings')}
             aria-current={activePage === 'settings' ? 'page' : undefined}
           >
-            <Settings size={17} /><span>Paramètres</span>
+            <Settings size={17} /><span>{t('nav.settings')}</span>
           </button>
         </div>
       </aside>
 
       {mobileNavOpen && (
-        <button className="mobile-scrim" aria-label="Fermer le menu" onClick={() => setMobileNavOpen(false)} />
+        <button className="mobile-scrim" aria-label={t('nav.closeMenu')} onClick={() => setMobileNavOpen(false)} />
       )}
 
-      <main className="main-area">
+      <main className="main-area" id="contenu">
         <header className="topbar">
-          <button className="icon-button menu-button" aria-label="Ouvrir le menu" onClick={() => setMobileNavOpen(true)}>
-            <Menu size={20} />
-          </button>
-          <a
-            className="brand topbar-brand"
-            href="#home"
-            onClick={(event) => { event.preventDefault(); goTo('home'); }}
-          >
-            <span className="nasa-mark" aria-hidden="true"><span>NASA</span><i /></span>
-            <span className="brand-copy">
-              <strong>NASA AI Assistant</strong>
-              <small>Explorez l’univers des connaissances NASA</small>
-            </span>
-          </a>
-          <div className="topbar-actions">
-            <button
-              className="icon-button theme-button"
-              aria-label={theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'}
-              title={theme === 'dark' ? 'Thème clair' : 'Thème sombre'}
-              onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+          <div className="topbar-inner">
+            <button className="icon-button menu-button" aria-label={t('nav.openMenu')} onClick={() => setMobileNavOpen(true)}>
+              <Menu size={20} />
+            </button>
+            <a
+              className="topbar-brand"
+              href="#home"
+              onClick={(event) => { event.preventDefault(); goTo('home'); }}
             >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            <button className="user-chip research-chip" onClick={() => goTo('profile')}>
-              {avatar
-                ? <img className="avatar avatar-small user-avatar-image" src={avatar} alt="" />
-                : profile
-                  ? <span className="avatar avatar-small">{profileInitials(profile.display_name)}</span>
-                  : <UserRound size={15} />}
-              <span>
-                {status === 'loading'
-                  ? 'Vérification…'
-                  : profile?.display_name ?? 'Créer un compte'}
+              <span className="logo-lockup-mark"><Logo size="sm" /></span>
+              <span className="brand-copy">
+                <strong>{PLATFORM_NAME}</strong>
+                <small>{t('topbar.tagline')}</small>
               </span>
-            </button>
+            </a>
+            <div className="topbar-actions">
+              <span
+                className="team-badge"
+                title={t('footer.teamTitle', { team: TEAM_NAME })}
+              >
+                <Users size={13} aria-hidden="true" />
+                {TEAM_NAME}
+              </span>
+              <LanguageToggle compact />
+              <button
+                className="icon-button theme-button"
+                aria-label={theme === 'dark' ? t('topbar.toLight') : t('topbar.toDark')}
+                title={theme === 'dark' ? t('topbar.toLight') : t('topbar.toDark')}
+                onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+              >
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+              <UserMenu onNavigate={goTo} />
+            </div>
           </div>
         </header>
 
@@ -133,7 +172,6 @@ function Shell() {
               articles={articles}
               draft={draft}
               setDraft={setDraft}
-              ask={ask}
               greeting={greeting}
             />
           )}
@@ -143,7 +181,6 @@ function Shell() {
           {activePage === 'explore' && (
             <LibraryPage
               activePage={activePage}
-              copy={activeCopy}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               articleFilter={articleFilter}
@@ -158,8 +195,14 @@ function Shell() {
         </div>
         {activePage !== 'chat' && (
           <footer className="page-footer">
-            <span>TechLabs</span>
-            <span>Explorer la science, préparer demain</span>
+            <span>{PLATFORM_NAME}</span>
+            <span className="page-footer-meta">
+              <span>{t('topbar.tagline')}</span>
+              <span className="page-footer-sep" aria-hidden="true">·</span>
+              <strong className="page-footer-team">
+                {t('footer.team', { team: TEAM_NAME })}
+              </strong>
+            </span>
           </footer>
         )}
       </main>
@@ -167,13 +210,14 @@ function Shell() {
   );
 }
 
-/** L'Accueil et le Chat partagent le même store conversationnel. */
 export default function App() {
   return (
-    <AuthProvider>
-      <ConversationProvider>
-        <Shell />
-      </ConversationProvider>
-    </AuthProvider>
+    <I18nProvider>
+      <AuthProvider>
+        <ConversationProvider>
+          <Shell />
+        </ConversationProvider>
+      </AuthProvider>
+    </I18nProvider>
   );
 }

@@ -43,11 +43,17 @@ class MediaItem(BaseModel):
     duration: float | None = None
     timestamp: float | None = None
     caption: str | None = None
+    # Segments horodatés d'une vidéo : chaque entrée porte `start_s`, `end_s` et
+    # l'image de la séquence. Vide pour une image.
+    segments: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ChartSeries(BaseModel):
     name: str
     points: list[tuple[float, float]]
+
+
+ChartKind = Literal["line", "area", "bar"]
 
 
 class Chart(BaseModel):
@@ -59,6 +65,8 @@ class Chart(BaseModel):
     y_axis: str
     x_unit: str | None = None
     y_unit: str | None = None
+    kind: ChartKind = "line"
+    description: str | None = None
     series: list[ChartSeries] = Field(default_factory=list)
     source: str | None = None
     interpretation: str | None = None
@@ -138,14 +146,65 @@ class ConversationCreate(BaseModel):
         return cleaned or None
 
 
+class AttachmentRef(BaseModel):
+    """Référence à une pièce jointe déjà téléversée (`POST /chat/attachments`).
+
+    Le contenu binaire n'est jamais renvoyé ici : seul l'identifiant et ses
+    métadonnées circulent, ce qui suffit au RAG et au multimodal.
+    """
+
+    attachment_id: str = Field(min_length=32, max_length=32)
+    filename: str | None = Field(default=None, max_length=160)
+    media_type: Literal["document", "image", "video"] | None = None
+    size_bytes: int | None = Field(default=None, ge=0)
+    url: str | None = None
+
+
+class AttachmentOut(BaseModel):
+    """Réponse de `POST /chat/attachments`."""
+
+    attachment_id: str
+    filename: str
+    content_type: str
+    media_type: Literal["document", "image", "video"]
+    size_bytes: int
+    url: str
+
+
 class ChatRequest(BaseModel):
     conversation_id: str | None = None
     text: str = Field(min_length=1, max_length=4000)
+    attachments: list[AttachmentRef] = Field(default_factory=list)
 
     @field_validator("text", mode="before")
     @classmethod
     def _clean(cls, value: str) -> str:
         return value.strip()
+
+    @field_validator("attachments", mode="before")
+    @classmethod
+    def _clean_attachments(cls, value: list | None) -> list:
+        if not value:
+            return []
+        cleaned: list = []
+        seen: set[str] = set()
+        for item in value:
+            attachment_id = item.get("attachment_id") if isinstance(item, dict) else getattr(item, "attachment_id", None)
+            if not attachment_id or attachment_id in seen:
+                continue
+            seen.add(attachment_id)
+            cleaned.append(item)
+        return cleaned
+
+    @field_validator("attachments")
+    @classmethod
+    def _check_count(cls, value: list[AttachmentRef]) -> list[AttachmentRef]:
+        from app.core.config import get_settings
+
+        limit = get_settings().attachment_max_per_message
+        if len(value) > limit:
+            raise ValueError(f"Au plus {limit} pièces jointes par question.")
+        return value
 
 
 class ChatAccepted(BaseModel):

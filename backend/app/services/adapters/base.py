@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal, Protocol, runtime_checkable
 
-Capability = Literal["rag", "media", "science", "generation"]
+Capability = Literal["rag", "media", "science", "generation", "retrieval"]
 
 
 class AdapterNotConfigured(RuntimeError):
@@ -67,6 +67,7 @@ class GenerationRequest:
     media: list[dict] = field(default_factory=list)
     science: list[ScienceResult] = field(default_factory=list)
     history: list[dict] = field(default_factory=list)
+    attachments: list[dict] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -115,3 +116,25 @@ class GenerationAdapter(Protocol):
     available: bool
 
     def generate(self, request: GenerationRequest) -> GeneratedAnswer: ...
+
+
+@runtime_checkable
+class RetrievalAdapter(Protocol):
+    """Recherche multimodale (documents, images, vidéos, mesures).
+
+    Contrairement aux autres adaptateurs, celui-ci est **implémenté** : il
+    s'appuie sur l'index local (`app.services.retrieval`). `available` indique
+    que l'implémentation est branchée, pas que l'index est rempli : l'état de
+    l'index est exposé par `status()`.
+    """
+
+    name: str
+    available: bool
+
+    def status(self) -> dict: ...
+
+    def scan(self, *, force: bool = False) -> dict: ...
+
+    def search(self, question: str, *, limit: int | None = None) -> object: ...
+
+    def resolve_file(self, path: str) -> str | None: ...

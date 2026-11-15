@@ -28,3 +28,6 @@ backend/var/
 Thumbs.db
 coverage/
 *.log
+
+# Rapports générés par les scripts de vérification
+scripts/.color-report.json
